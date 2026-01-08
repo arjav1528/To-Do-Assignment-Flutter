@@ -165,17 +165,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   )
-                : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                    itemCount: taskService.tasks.length,
-                    itemBuilder: (context, index) {
-                      final task = taskService.tasks[index];
-                      return _SwipeableTaskTile(
-                        task: task,
-                        onDelete: () => _handleDeleteTask(task),
-                        onUpdate: () => _handleUpdateTask(task),
-                      );
-                    },
+                : Column(
+                    children: [
+                      _SwipeHintWidget(),
+                      Expanded(
+                        child: ListView.builder(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          itemCount: taskService.tasks.length,
+                          itemBuilder: (context, index) {
+                            final task = taskService.tasks[index];
+                            return _SwipeableTaskTile(
+                              task: task,
+                              onDelete: () => _handleDeleteTask(task),
+                              onUpdate: () => _handleUpdateTask(task),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -387,6 +394,63 @@ class _SwipeableTaskTileState extends State<_SwipeableTaskTile> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SwipeHintWidget extends StatelessWidget {
+  const _SwipeHintWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8.r),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.swipe_right,
+            size: 14.sp,
+            color: Colors.blue.withOpacity(0.7),
+          ),
+          SizedBox(width: 4.w),
+          Text(
+            'Swipe right to update',
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: Colors.blue.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          SizedBox(width: 16.w),
+          Container(
+            width: 1.w,
+            height: 12.h,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.2),
+          ),
+          SizedBox(width: 16.w),
+          Icon(
+            Icons.swipe_left,
+            size: 14.sp,
+            color: Colors.red.withOpacity(0.7),
+          ),
+          SizedBox(width: 4.w),
+          Text(
+            'Swipe left to delete',
+            style: TextStyle(
+              fontSize: 11.sp,
+              color: Colors.red.withOpacity(0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+
+        ],
       ),
     );
   }
