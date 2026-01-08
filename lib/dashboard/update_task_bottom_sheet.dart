@@ -2,21 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../services/task_service.dart';
+import '../models/task_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/validators.dart';
 
-class AddTaskBottomSheet extends StatefulWidget {
-  const AddTaskBottomSheet({super.key});
+class UpdateTaskBottomSheet extends StatefulWidget {
+  final Task task;
+
+  const UpdateTaskBottomSheet({super.key, required this.task});
 
   @override
-  State<AddTaskBottomSheet> createState() => _AddTaskBottomSheetState();
+  State<UpdateTaskBottomSheet> createState() => _UpdateTaskBottomSheetState();
 }
 
-class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
+class _UpdateTaskBottomSheetState extends State<UpdateTaskBottomSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  String _selectedStatus = 'pending';
+  late TextEditingController _titleController;
+  late String _selectedStatus;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.task.title);
+    _selectedStatus = widget.task.status;
+  }
 
   @override
   void dispose() {
@@ -24,9 +34,9 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
     super.dispose();
   }
 
-  Future<void> _handleAddTask() async {
+  Future<void> _handleUpdateTask() async {
     if (!_formKey.currentState!.validate()) {
-      AppLogger.warning('Add task form validation failed');
+      AppLogger.warning('Update task form validation failed');
       return;
     }
 
@@ -36,22 +46,23 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
 
     try {
       final taskService = Provider.of<TaskService>(context, listen: false);
-      await taskService.addTask(
+      await taskService.updateTask(
+        taskId: widget.task.id,
         title: _titleController.text.trim(),
         status: _selectedStatus,
       );
 
-      AppLogger.success('Task added successfully');
+      AppLogger.success('Task updated successfully');
       
       if (mounted) {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      AppLogger.error('Error adding task', e);
+      AppLogger.error('Error updating task', e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to add task: ${e.toString()}'),
+            content: Text('Failed to update task: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -84,7 +95,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Add New Task',
+                  'Update Task',
                   style: TextStyle(
                     fontSize: 24.sp,
                     fontWeight: FontWeight.bold,
@@ -101,7 +112,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
             TextFormField(
               controller: _titleController,
               textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _handleAddTask(),
+              onFieldSubmitted: (_) => _handleUpdateTask(),
               decoration: InputDecoration(
                 labelText: 'Task Title',
                 hintText: 'Enter task title',
@@ -162,7 +173,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
             SizedBox(
               height: 56.h,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _handleAddTask,
+                onPressed: _isLoading ? null : _handleUpdateTask,
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
@@ -181,7 +192,7 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
                         ),
                       )
                     : Text(
-                        'Add Task',
+                        'Update Task',
                         style: TextStyle(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,

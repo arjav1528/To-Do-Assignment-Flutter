@@ -129,4 +129,75 @@ class TaskService extends ChangeNotifier {
     final newStatus = task.isCompleted ? 'pending' : 'completed';
     await updateTaskStatus(taskId: task.id, newStatus: newStatus);
   }
+
+  Future<void> deleteTask(String taskId) async {
+    if (_userId == null) {
+      AppLogger.error('Cannot delete task: User not authenticated');
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      AppLogger.info('Deleting task: $taskId');
+
+      await _supabase
+          .from('tasks')
+          .delete()
+          .eq('id', taskId)
+          .eq('user_id', _userId!);
+
+      _tasks.removeWhere((task) => task.id == taskId);
+      AppLogger.success('Task deleted successfully: $taskId');
+      
+      notifyListeners();
+    } catch (e, stackTrace) {
+      AppLogger.error('Error deleting task: $taskId', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> updateTask({
+    required String taskId,
+    String? title,
+    String? status,
+  }) async {
+    if (_userId == null) {
+      AppLogger.error('Cannot update task: User not authenticated');
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      AppLogger.info('Updating task: $taskId');
+
+      final updateData = <String, dynamic>{
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      if (title != null) {
+        updateData['title'] = title;
+      }
+      if (status != null) {
+        updateData['status'] = status;
+      }
+
+      final response = await _supabase
+          .from('tasks')
+          .update(updateData)
+          .eq('id', taskId)
+          .eq('user_id', _userId!)
+          .select()
+          .single();
+
+      final updatedTask = Task.fromJson(Map<String, dynamic>.from(response));
+      
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+      if (taskIndex != -1) {
+        _tasks[taskIndex] = updatedTask;
+        AppLogger.success('Task updated successfully: $taskId');
+        notifyListeners();
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('Error updating task: $taskId', e, stackTrace);
+      rethrow;
+    }
+  }
 }

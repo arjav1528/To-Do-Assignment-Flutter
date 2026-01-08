@@ -114,7 +114,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
               children: [
                 SizedBox(height: 40.h),
                 
-                // Title Section
                 Icon(
                   Icons.person_add_outlined,
                   size: 80.sp,
@@ -141,7 +140,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 SizedBox(height: 48.h),
 
-                // Email Field
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -160,7 +158,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 SizedBox(height: 20.h),
 
-                // Password Field
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -191,7 +188,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 SizedBox(height: 20.h),
 
-                // Confirm Password Field
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
@@ -226,7 +222,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 SizedBox(height: 32.h),
 
-                // Sign Up Button
                 SizedBox(
                   height: 56.h,
                   child: ElevatedButton(
@@ -259,7 +254,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 SizedBox(height: 24.h),
 
-                // Login Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

@@ -7,6 +7,7 @@ import '../auth/auth_service.dart';
 import '../models/task_model.dart';
 import '../utils/app_logger.dart';
 import 'add_task_bottom_sheet.dart';
+import 'update_task_bottom_sheet.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -48,6 +49,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
       ),
       builder: (context) => const AddTaskBottomSheet(),
+    );
+
+    if (result == true && mounted) {
+      _loadTasks();
+    }
+  }
+
+  Future<void> _handleDeleteTask(Task task) async {
+    final taskService = Provider.of<TaskService>(context, listen: false);
+    
+    try {
+      await taskService.deleteTask(task.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete task: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleUpdateTask(Task task) async {
+    final result = await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (context) => UpdateTaskBottomSheet(task: task),
     );
 
     if (result == true && mounted) {
@@ -129,7 +170,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     itemCount: taskService.tasks.length,
                     itemBuilder: (context, index) {
                       final task = taskService.tasks[index];
-                      return _TaskTile(task: task);
+                      return _SwipeableTaskTile(
+                        task: task,
+                        onDelete: () => _handleDeleteTask(task),
+                        onUpdate: () => _handleUpdateTask(task),
+                      );
                     },
                   ),
       ),
@@ -142,16 +187,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class _TaskTile extends StatefulWidget {
+class _SwipeableTaskTile extends StatefulWidget {
   final Task task;
+  final VoidCallback onDelete;
+  final VoidCallback onUpdate;
 
-  const _TaskTile({required this.task});
+  const _SwipeableTaskTile({
+    required this.task,
+    required this.onDelete,
+    required this.onUpdate,
+  });
 
   @override
-  State<_TaskTile> createState() => _TaskTileState();
+  State<_SwipeableTaskTile> createState() => _SwipeableTaskTileState();
 }
 
-class _TaskTileState extends State<_TaskTile> {
+class _SwipeableTaskTileState extends State<_SwipeableTaskTile> {
   bool _isToggling = false;
 
   Future<void> _handleToggle() async {
@@ -182,73 +233,158 @@ class _TaskTileState extends State<_TaskTile> {
     }
   }
 
+  Future<bool> _confirmDelete() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Task'),
+        content: const Text('Are you sure you want to delete this task?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final task = widget.task;
     
-    return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        leading: GestureDetector(
-          onTap: _handleToggle,
-          child: Container(
-            width: 40.w,
-            height: 40.h,
-            decoration: BoxDecoration(
-              color: task.isCompleted
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.orange.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: _isToggling
-                ? Padding(
-                    padding: EdgeInsets.all(8.w),
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        task.isCompleted ? Colors.green : Colors.orange,
-                      ),
-                    ),
-                  )
-                : Icon(
-                    task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: task.isCompleted ? Colors.green : Colors.orange,
-                  ),
-          ),
+    return Dismissible(
+      key: Key(task.id),
+      direction: DismissDirection.horizontal,
+      background: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          borderRadius: BorderRadius.circular(12.r),
         ),
-        title: Text(
-          task.title,
-          style: TextStyle(
-            fontSize: 16.sp,
-            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-            color: task.isCompleted
-                ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
-                : Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        subtitle: Padding(
-          padding: EdgeInsets.only(top: 4.h),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: task.isCompleted
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(
-                  task.status.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w600,
-                    color: task.isCompleted ? Colors.green : Colors.orange,
-                  ),
-                ),
+        alignment: Alignment.centerLeft,
+        padding: EdgeInsets.only(left: 20.w),
+        child: Row(
+          children: [
+            Icon(Icons.edit, color: Colors.white, size: 24.sp),
+            SizedBox(width: 8.w),
+            Text(
+              'Update',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+      secondaryBackground: Container(
+        margin: EdgeInsets.only(bottom: 12.h),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(12.r),
+        ),
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.only(right: 20.w),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Text(
+              'Delete',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16.sp,
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Icon(Icons.delete, color: Colors.white, size: 24.sp),
+          ],
+        ),
+      ),
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          widget.onUpdate();
+          return false;
+        } else {
+          return await _confirmDelete();
+        }
+      },
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart) {
+          widget.onDelete();
+        }
+      },
+      child: Card(
+        margin: EdgeInsets.only(bottom: 12.h),
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+          leading: GestureDetector(
+            onTap: _handleToggle,
+            child: Container(
+              width: 40.w,
+              height: 40.h,
+              decoration: BoxDecoration(
+                color: task.isCompleted
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.orange.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: _isToggling
+                  ? Padding(
+                      padding: EdgeInsets.all(8.w),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          task.isCompleted ? Colors.green : Colors.orange,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: task.isCompleted ? Colors.green : Colors.orange,
+                    ),
+            ),
+          ),
+          title: Text(
+            task.title,
+            style: TextStyle(
+              fontSize: 16.sp,
+              decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+              color: task.isCompleted
+                  ? Theme.of(context).colorScheme.onSurface.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          subtitle: Padding(
+            padding: EdgeInsets.only(top: 4.h),
+            child: Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                  decoration: BoxDecoration(
+                    color: task.isCompleted
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  child: Text(
+                    task.status.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      fontWeight: FontWeight.w600,
+                      color: task.isCompleted ? Colors.green : Colors.orange,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
