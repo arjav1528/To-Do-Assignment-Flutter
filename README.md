@@ -1,3 +1,7 @@
+## 🤖 Development Note
+
+I used AI assistance to speed up development, but I can implement all these functionalities without any AI or LLM by using documentation and my previous experience.
+
 # 📱 Mini TaskHub – Personal Task Tracker
 
 A modern, responsive Flutter application for personal task management with Supabase authentication and database integration. Built with clean architecture, state management, and beautiful UI/UX.
@@ -360,6 +364,6 @@ The app uses a centralized logger (`AppLogger`) with different log levels:
 
 For issues and questions, please open an issue in the repository.
 
+
 ---
 
-**Built with ❤️ using Flutter and Supabase**
