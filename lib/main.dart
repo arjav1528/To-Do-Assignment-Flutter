@@ -3,8 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/supabase_service.dart';
+import 'services/task_service.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
+import 'dashboard/dashboard_screen.dart';
 import 'app/theme.dart';
 import 'utils/app_logger.dart';
 
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => TaskService()),
       ],
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
@@ -85,24 +88,7 @@ class AuthWrapper extends StatelessWidget {
         
         if (isAuthenticated) {
           AppLogger.info('User is authenticated: $userEmail - Redirecting to dashboard');
-          return Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Welcome! Dashboard coming soon...'),
-                  SizedBox(height: 20.h),
-                  ElevatedButton(
-                    onPressed: () async {
-                      AppLogger.info('Sign out button pressed');
-                      await authService.signOut();
-                    },
-                    child: Text('Sign Out'),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return const DashboardScreen();
         } else {
           AppLogger.info('User is not authenticated - Showing login screen');
           return const LoginScreen();
