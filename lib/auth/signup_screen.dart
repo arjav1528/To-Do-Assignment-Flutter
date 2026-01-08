@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../utils/validators.dart';
+import '../utils/app_logger.dart';
 import 'auth_service.dart';
 import 'login_screen.dart';
 
@@ -31,8 +32,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Future<void> _handleSignUp() async {
     if (!_formKey.currentState!.validate()) {
+      AppLogger.warning('Sign up form validation failed');
       return;
     }
+
+    final email = _emailController.text.trim();
+    AppLogger.info('Sign up attempt initiated for: $email');
 
     setState(() {
       _isLoading = true;
@@ -41,7 +46,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.signUp(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
       );
 
@@ -49,6 +54,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final isAuthenticated = authService.isAuthenticated;
         
         if (isAuthenticated) {
+          AppLogger.success('Account created and user auto-signed in: $email');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Account created successfully!'),
@@ -57,6 +63,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
           Navigator.pop(context);
         } else {
+          AppLogger.info('Account created but requires email verification: $email');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Account created successfully! Please sign in.'),
@@ -69,7 +76,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           );
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error('Sign up failed for: $email', e, stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

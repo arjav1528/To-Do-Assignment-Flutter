@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -8,23 +6,28 @@ import 'services/supabase_service.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'app/theme.dart';
+import 'utils/app_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    AppLogger.info('Initializing Supabase...');
     await SupabaseService.initialize();
-    log("Supabase initialized");
-    
+    AppLogger.success('Supabase initialized successfully');
 
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       if (event == AuthChangeEvent.signedIn) {
-        log('User signed in via email verification');
+        AppLogger.success('User signed in via email verification');
+      } else if (event == AuthChangeEvent.signedOut) {
+        AppLogger.info('User signed out');
+      } else if (event == AuthChangeEvent.tokenRefreshed) {
+        AppLogger.debug('Auth token refreshed');
       }
     });
-  } catch (e) {
-    log('Error initializing Supabase: $e');
+  } catch (e, stackTrace) {
+    AppLogger.error('Error initializing Supabase', e, stackTrace);
   }
 
   runApp(const MyApp());
@@ -68,8 +71,8 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder(
       stream: authService.authStateChanges,
       builder: (context, snapshot) {
-
         if (snapshot.connectionState == ConnectionState.waiting) {
+          AppLogger.debug('Checking authentication state...');
           return Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -78,8 +81,10 @@ class AuthWrapper extends StatelessWidget {
         }
 
         final isAuthenticated = authService.isAuthenticated;
+        final userEmail = authService.currentUser?.email ?? 'Unknown';
         
         if (isAuthenticated) {
+          AppLogger.info('User is authenticated: $userEmail - Redirecting to dashboard');
           return Scaffold(
             body: Center(
               child: Column(
@@ -89,6 +94,7 @@ class AuthWrapper extends StatelessWidget {
                   SizedBox(height: 20.h),
                   ElevatedButton(
                     onPressed: () async {
+                      AppLogger.info('Sign out button pressed');
                       await authService.signOut();
                     },
                     child: Text('Sign Out'),
@@ -98,6 +104,7 @@ class AuthWrapper extends StatelessWidget {
             ),
           );
         } else {
+          AppLogger.info('User is not authenticated - Showing login screen');
           return const LoginScreen();
         }
       },

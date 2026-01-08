@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../utils/validators.dart';
+import '../utils/app_logger.dart';
 import 'auth_service.dart';
 import 'signup_screen.dart';
 
@@ -28,8 +29,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) {
+      AppLogger.warning('Login form validation failed');
       return;
     }
+
+    final email = _emailController.text.trim();
+    AppLogger.info('Login attempt initiated for: $email');
 
     setState(() {
       _isLoading = true;
@@ -38,19 +43,21 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       await authService.signIn(
-        email: _emailController.text.trim(),
+        email: email,
         password: _passwordController.text,
       );
 
       if (mounted) {
+        AppLogger.success('Login successful for: $email');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Login successful!'),
             backgroundColor: Colors.green,
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      AppLogger.error('Login failed for: $email', e, stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
