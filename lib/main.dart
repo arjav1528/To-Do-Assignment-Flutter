@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/supabase_service.dart';
 import 'services/task_service.dart';
+import 'services/theme_service.dart';
 import 'auth/auth_service.dart';
 import 'auth/login_screen.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => TaskService()),
       ],
@@ -50,13 +52,17 @@ class MyApp extends StatelessWidget {
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, child) {
-          return MaterialApp(
-            title: 'Todo App',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system,
-            home: const AuthWrapper(),
+          return Consumer<ThemeService>(
+            builder: (context, themeService, _) {
+              return MaterialApp(
+                title: 'Todo App',
+                debugShowCheckedModeBanner: false,
+                theme: AppTheme.lightTheme,
+                darkTheme: AppTheme.darkTheme,
+                themeMode: themeService.themeMode,
+                home: const AuthWrapper(),
+              );
+            },
           );
         },
       ),

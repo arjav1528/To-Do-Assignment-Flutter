@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../services/task_service.dart';
+import '../services/theme_service.dart';
 import '../auth/auth_service.dart';
 import '../models/task_model.dart';
 import '../utils/app_logger.dart';
@@ -58,11 +59,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final taskService = Provider.of<TaskService>(context);
     final authService = Provider.of<AuthService>(context);
+    final themeService = Provider.of<ThemeService>(context);
 
     return Scaffold(
       appBar: AppBar(
         title: Text('My Tasks'),
         actions: [
+          IconButton(
+            icon: Icon(
+              themeService.isDarkMode
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
+            onPressed: () async {
+              AppLogger.info('Theme toggle button pressed');
+              await themeService.toggleTheme();
+            },
+            tooltip: themeService.isDarkMode
+                ? 'Switch to Light Mode'
+                : 'Switch to Dark Mode',
+          ),
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
