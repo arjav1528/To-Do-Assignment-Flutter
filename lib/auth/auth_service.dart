@@ -20,7 +20,6 @@ class AuthService extends ChangeNotifier {
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
-        emailRedirectTo: redirectTo ?? 'com.todo.app://verify-email',
       );
       notifyListeners();
       return response;
