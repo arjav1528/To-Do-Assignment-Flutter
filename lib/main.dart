@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'services/supabase_service.dart';
 
@@ -7,10 +9,11 @@ void main() async {
   // Initialize Supabase
   try {
     await SupabaseService.initialize();
+    log("Supabase initialized");
   } catch (e) {
     // Handle initialization error
-    debugPrint('Error initializing Supabase: $e');
-    // You might want to show an error dialog or handle this differently
+    log('Error initializing Supabase: $e');
+    
   }
 
   runApp(const MyApp());
