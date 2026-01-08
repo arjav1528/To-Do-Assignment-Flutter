@@ -98,7 +98,6 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
             ),
             SizedBox(height: 24.h),
             
-            // Title Field
             TextFormField(
               controller: _titleController,
               textInputAction: TextInputAction.done,
@@ -117,7 +116,6 @@ class _AddTaskBottomSheetState extends State<AddTaskBottomSheet> {
             ),
             SizedBox(height: 20.h),
 
-            // Status Dropdown
             DropdownButtonFormField<String>(
               value: _selectedStatus,
               decoration: InputDecoration(

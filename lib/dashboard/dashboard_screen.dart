@@ -126,29 +126,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class _TaskTile extends StatelessWidget {
+class _TaskTile extends StatefulWidget {
   final Task task;
 
   const _TaskTile({required this.task});
 
   @override
+  State<_TaskTile> createState() => _TaskTileState();
+}
+
+class _TaskTileState extends State<_TaskTile> {
+  bool _isToggling = false;
+
+  Future<void> _handleToggle() async {
+    if (_isToggling) return;
+
+    setState(() {
+      _isToggling = true;
+    });
+
+    try {
+      final taskService = Provider.of<TaskService>(context, listen: false);
+      await taskService.toggleTaskStatus(widget.task);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update task: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isToggling = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final task = widget.task;
+    
     return Card(
       margin: EdgeInsets.only(bottom: 12.h),
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        leading: Container(
-          width: 40.w,
-          height: 40.h,
-          decoration: BoxDecoration(
-            color: task.isCompleted
-                ? Colors.green.withOpacity(0.1)
-                : Colors.orange.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: task.isCompleted ? Colors.green : Colors.orange,
+        leading: GestureDetector(
+          onTap: _handleToggle,
+          child: Container(
+            width: 40.w,
+            height: 40.h,
+            decoration: BoxDecoration(
+              color: task.isCompleted
+                  ? Colors.green.withOpacity(0.1)
+                  : Colors.orange.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: _isToggling
+                ? Padding(
+                    padding: EdgeInsets.all(8.w),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        task.isCompleted ? Colors.green : Colors.orange,
+                      ),
+                    ),
+                  )
+                : Icon(
+                    task.isCompleted ? Icons.check_circle : Icons.radio_button_unchecked,
+                    color: task.isCompleted ? Colors.green : Colors.orange,
+                  ),
           ),
         ),
         title: Text(

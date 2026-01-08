@@ -86,4 +86,47 @@ class TaskService extends ChangeNotifier {
   Future<void> refreshTasks() async {
     await fetchTasks();
   }
+
+  Future<void> updateTaskStatus({
+    required String taskId,
+    required String newStatus,
+  }) async {
+    if (_userId == null) {
+      AppLogger.error('Cannot update task: User not authenticated');
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      AppLogger.info('Updating task status: $taskId to $newStatus');
+
+      final updateData = {
+        'status': newStatus,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      await _supabase
+          .from('tasks')
+          .update(updateData)
+          .eq('id', taskId)
+          .eq('user_id', _userId!);
+
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+      if (taskIndex != -1) {
+        _tasks[taskIndex] = _tasks[taskIndex].copyWith(
+          status: newStatus,
+          updatedAt: DateTime.now(),
+        );
+        AppLogger.success('Task status updated successfully: $taskId');
+        notifyListeners();
+      }
+    } catch (e, stackTrace) {
+      AppLogger.error('Error updating task status: $taskId', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> toggleTaskStatus(Task task) async {
+    final newStatus = task.isCompleted ? 'pending' : 'completed';
+    await updateTaskStatus(taskId: task.id, newStatus: newStatus);
+  }
 }
